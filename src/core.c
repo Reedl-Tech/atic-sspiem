@@ -1,5 +1,5 @@
 /********************************************************************
-* Lattice Semiconductor Corp. Copyright 2010
+* Lattice Semiconductor Corp. Copyright 210
 *
 * core.c / .cpp
 *
@@ -92,49 +92,49 @@ int SSPIEm_init(unsigned int algoID)
 	/* initialize header check sum unit */
 	init_CS(&headerCS, HEADERCRCSIZE * 8, 8);
 	/* initialize debug */
-#ifdef	DEBUG_LEVEL_1
+	#ifdef	DEBUG_LEVEL_1
 	dbgu_init();
-#endif
+	#endif
 	/* initialize SPI */
 	if(!SPI_init()){
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_ALGO_INIT, INIT_SPI_FAIL);
-#endif
+		#endif
 		return ERROR_INIT_SPI;
 	}
-#ifdef	DEBUG_LEVEL_2
+	#ifdef	DEBUG_LEVEL_2
 	dbgu_putint(DBGU_L2_INIT, INIT_BEGIN);//"Initialization begin"
-#endif
+	#endif
 	/* initialize algorithm utility */
 	if(!algoInit()){
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_ALGO_INIT, INIT_ALGO_FAIL);
-#endif
+		#endif
 		return ERROR_INIT_ALGO;
 	}
 	/* discard comments, if available */
 	do{
 		if(!VME_getByte(&currentByte, 0, 0, 0)){
-#ifdef	DEBUG_LEVEL_1
+			#ifdef	DEBUG_LEVEL_1
 			dbgu_putint(DBGU_L1_ALGO_INIT, NO_ALGOID);
-#endif
+			#endif
 			return ERROR_INIT;
 		}
 		putChunk(&headerCS, (unsigned int) currentByte);
 		if(currentByte == HCOMMENT){
 			if(proc_HCOMMENT(0, 0, 0, &headerCS) == PROC_FAIL){
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_INIT, COMMENT_END_UNEXPECTED);
-#endif
+				#endif
 				return ERROR_INIT;
 			}
 		}
 	}while(currentByte == HCOMMENT);
 	/* check ALGOID */
 	if(currentByte != ALGOID){
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_ALGO_INIT, NO_ALGOID);
-#endif
+		#endif
 		return ERROR_INIT;
 	}
 	else {
@@ -143,18 +143,18 @@ int SSPIEm_init(unsigned int algoID)
 				putChunk(&headerCS, (unsigned int) currentByte);
 				if (currentByte != (unsigned char)(algoID >> ((3-i) * 8))){
 					if(algoID != 0xFFFFFFFF){
-#ifdef	DEBUG_LEVEL_1
+						#ifdef	DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_MISMATCH, NO_ALGOID);
-#endif
+						#endif
 						return ERROR_INIT;
 					}
 				}
 			}
 			/* no algorithm ID byte available */
 			else{
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_INIT, NO_ALGOID);
-#endif
+				#endif
 				return ERROR_INIT;
 			}
 		}
@@ -163,9 +163,9 @@ int SSPIEm_init(unsigned int algoID)
 	if(!VME_getByte(&currentByte, 0, 0, 0) || 
 		currentByte != VERSION)
 	{	
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_ALGO_INIT, NO_VERSION);
-#endif
+		#endif
 		return ERROR_INIT;
 	}
 	else 
@@ -175,17 +175,17 @@ int SSPIEm_init(unsigned int algoID)
 			if(VME_getByte(&currentByte, 0, 0, 0)){
 				putChunk(&headerCS, (unsigned int) currentByte);
 				if (currentByte > version[i]){
-#ifdef	DEBUG_LEVEL_1
+					#ifdef	DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_MISMATCH, NO_VERSION);
-#endif
+					#endif
 					return ERROR_INIT_VERSION;
 				}
 			}
 			/* no version byte available */
 			else{
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_INIT, NO_VERSION);
-#endif
+				#endif
 				return ERROR_INIT;
 			}
 		}
@@ -194,10 +194,10 @@ int SSPIEm_init(unsigned int algoID)
 	if(!VME_getByte(&currentByte, 0, 0, 0) || 
 		currentByte != BUFFERREQ)
 	{
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint( DBGU_L1_ALGO_INIT, NO_BUFFERREQ);
-#endif
-		return ERROR_INIT;
+		#endif
+			return ERROR_INIT;
 	}
 	else 
 	{
@@ -205,9 +205,9 @@ int SSPIEm_init(unsigned int algoID)
 		if(!VME_getByte(&currentByte, 0, 0, 0) ||
 			currentByte > MAXBUF)
 		{
-#ifdef	DEBUG_LEVEL_1
+			#ifdef	DEBUG_LEVEL_1
 			dbgu_putint(DBGU_L1_MISMATCH, NO_BUFFERREQ); 
-#endif
+			#endif
 			return ERROR_INIT;
 		}
 		else
@@ -217,9 +217,9 @@ int SSPIEm_init(unsigned int algoID)
 	if(!VME_getByte(&currentByte, 0, 0, 0) || 
 		currentByte != STACKREQ)
 	{
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_ALGO_INIT, NO_STACKREQ); 
-#endif
+		#endif
 		return ERROR_INIT;
 	}
 	else 
@@ -229,9 +229,9 @@ int SSPIEm_init(unsigned int algoID)
 		if(!VME_getByte(&currentByte, 0, 0, 0) || 
 			currentByte > MAXSTACK)
 		{
-#ifdef	DEBUG_LEVEL_1
+			#ifdef	DEBUG_LEVEL_1
 			dbgu_putint(DBGU_L1_MISMATCH, NO_STACKREQ);
-#endif
+			#endif
 			return ERROR_INIT;
 		}
 		/* no STACKREQ byte available */
@@ -242,19 +242,19 @@ int SSPIEm_init(unsigned int algoID)
 	/* check MASKBUFREQ */
 	if(!VME_getByte(&currentByte, 0, 0, 0) || 
 		currentByte != MASKBUFREQ){
-#ifdef DEBUG_LEVEL_1
-			dbgu_putint(DBGU_L1_ALGO_INIT, NO_MASKBUFREQ);
-#endif
-			return ERROR_INIT;
+		#ifdef DEBUG_LEVEL_1
+		dbgu_putint(DBGU_L1_ALGO_INIT, NO_MASKBUFREQ);
+		#endif
+		return ERROR_INIT;
 	}
 	else {
 		putChunk(&headerCS, (unsigned int) currentByte);
 		if(!VME_getByte(&currentByte, 0, 0, 0) || 
 			currentByte > MAX_MASKSIZE){	
-#ifdef DEBUG_LEVEL_1
-				dbgu_putint(DBGU_L1_MISMATCH, NO_MASKBUFREQ); 
-#endif
-				return ERROR_INIT;
+			#ifdef DEBUG_LEVEL_1
+			dbgu_putint(DBGU_L1_MISMATCH, NO_MASKBUFREQ); 
+			#endif
+			return ERROR_INIT;
 		}
 		else
 			putChunk(&headerCS, (unsigned int) currentByte);
@@ -263,18 +263,18 @@ int SSPIEm_init(unsigned int algoID)
 	if(!VME_getByte(&currentByte, 0, 0, 0) ||
 		currentByte != HCHANNEL)
 	{
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_ALGO_INIT, NO_CHANNEL);
-#endif
+		#endif
 		return ERROR_INIT;
 	}
 	else 
 	{
 		putChunk(&headerCS, (unsigned int) currentByte);
 		if(!VME_getByte(&currentByte, 0, 0, 0)){
-#ifdef	DEBUG_LEVEL_1
+			#ifdef	DEBUG_LEVEL_1
 			dbgu_putint(DBGU_L1_ALGO_INIT, NO_CHANNEL);
-#endif
+			#endif
 			return ERROR_INIT;
 		}
 		else{
@@ -288,37 +288,37 @@ int SSPIEm_init(unsigned int algoID)
 	}
 	if(!VME_getByte(&currentByte, 0, 0, 0) )
 	{
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint( DBGU_L1_ALGO_INIT, NO_COMPRESSION);
-#endif
-		return ERROR_INIT;
+		#endif
+			return ERROR_INIT;
 	}
 	else
 	{
 		putChunk(&headerCS, (unsigned int) currentByte);
 		if( currentByte == COMPRESSION || currentByte == HCOMMENT ){		
 			if(!VME_getByte(&currentByte, 0, 0, 0)){
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_INIT, NO_COMPRESSION); 
-#endif
+				#endif
 				return ERROR_INIT;
 			}
 			putChunk(&headerCS, currentByte);
 		}
 		else{
-#ifdef	DEBUG_LEVEL_1
+			#ifdef	DEBUG_LEVEL_1
 			dbgu_putint(DBGU_L1_ALGO_INIT, NO_COMPRESSION); 
-#endif
+			#endif
 			return ERROR_INIT;			
 		}
 	}
 	/* check HEADERCS (done) */
 	if(!VME_getByte(&currentByte, 0, 0, 0) ||
 		currentByte != HEADERCRC){
-#ifdef DEBUG_LEVEL_1
-			dbgu_putint(DBGU_L1_ALGO_INIT, NO_HEADERCS); 
-#endif
-			return ERROR_INIT;
+		#ifdef DEBUG_LEVEL_1
+		dbgu_putint(DBGU_L1_ALGO_INIT, NO_HEADERCS); 
+		#endif
+		return ERROR_INIT;
 	}
 	else 
 	{
@@ -326,9 +326,9 @@ int SSPIEm_init(unsigned int algoID)
 		{
 			if(!VME_getByte(&currentByte, 0, 0, 0))
 			{
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_INIT, NO_HEADERCS); 
-#endif
+				#endif
 				return ERROR_INIT;
 			}
 			mask = 0xFF << (8*(HEADERCRCSIZE - i - 1));
@@ -336,9 +336,9 @@ int SSPIEm_init(unsigned int algoID)
 				((headerCS.csValue & mask ) >> (8*(HEADERCRCSIZE - i - 1))) &&
 				currentByte != 0xFF)
 			{
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_MISMATCH, NO_HEADERCS);
-#endif
+				#endif
 				return ERROR_INIT_CHECKSUM;
 			}
 		}
@@ -347,16 +347,16 @@ int SSPIEm_init(unsigned int algoID)
 	if(!VME_getByte(&currentByte, 0, 0, 0) || 
 		currentByte != STARTOFALGO)
 	{	
-#ifdef	DEBUG_LEVEL_1
+		#ifdef	DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_ALGO_INIT, NO_STARTOFALGO);
-#endif
+		#endif
 		return ERROR_INIT;
 	}
 	else 
 	{
-#ifdef	DEBUG_LEVEL_2
+		#ifdef	DEBUG_LEVEL_2
 		dbgu_putint(DBGU_L2_INIT, INIT_COMPLETE);
-#endif		
+		#endif		
 	}
 	a_uiCheckFailedRow = 0;
 	a_uiRowCount       = 0;
@@ -401,12 +401,12 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 	short int		procReturn   = PROC_COMPLETE;
 	unsigned char	currentByte  = 0;
 	unsigned int	temp         = 0;
-#ifdef	DEBUG_LEVEL_2
+	#ifdef	DEBUG_LEVEL_2
 	if(bufAlgo == 0)
 		dbgu_putint(DBGU_L2_PROC, START_PROC);
 	else	
 		dbgu_putint(DBGU_L2_PROC, START_PROC_BUFFER);
-#endif
+	#endif
 	while(procReturn == PROC_COMPLETE)
 	{
 		/************************************************************************
@@ -416,15 +416,15 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 
 		if(!VME_getByte(&currentByte, bufAlgo, bufAlgoSize, &bufAlgoIndex)){
 			if(bufAlgo != 0){	
-#ifdef	DEBUG_LEVEL_2
+				#ifdef	DEBUG_LEVEL_2
 				dbgu_putint(DBGU_L2_PROC, END_PROC_BUFFER); 
-#endif
+				#endif
 				return PROC_OVER;
 			}
 			else{
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_PROC, UNABLE_TO_GET_BYTE);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			}
 		}
@@ -433,21 +433,21 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 		case HCOMMENT:
 			if(proc_HCOMMENT(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0) == PROC_FAIL)
 			{
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_PROC, COMMENT_END_UNEXPECTED);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			}
 			break;
 		case STARTTRAN:	/* starts transmission */
-#ifdef	DEBUG_LEVEL_2
+			#ifdef	DEBUG_LEVEL_2
 			dbgu_putint(DBGU_L2_PROC, ENTER_STARTTRAN);
-#endif
+			#endif
 
 			if(TRANS_starttranx( getCurrentChannel() ) == PROC_FAIL){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_TRANX_PROC, STARTTRAN_FAIL);
-#endif
+				#endif
 				return ERROR_PROC_HARDWARE;
 			}
 			break;
@@ -463,20 +463,20 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 			else
 				procReturn = proc_TRANS(&(bufAlgo[bufAlgoIndex]), bufAlgoSize, &bufAlgoIndex, getCurrentChannel(),currentByte);
 			if(procReturn <= 0){
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_PROCESS, TRANX_FAIL);//"Transmission fail", 
-#endif
+				#endif
 			}
 			break;
 		case RUNCLOCK:
-#ifdef	DEBUG_LEVEL_2
+			#ifdef	DEBUG_LEVEL_2
 			dbgu_putint(DBGU_L2_PROC, ENTER_RUNCLOCK);
-#endif
+			#endif
 			temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
 			if(temp == PROC_FAIL){
-#ifdef	DEBUG_LEVEL_1
-				dbgu_putint(DBGU_L1_ALGO_PROC, NO_NUMBER_OF_WAIT);
-#endif
+			#ifdef	DEBUG_LEVEL_1
+				dbgu_putint(DBGU_L1_PROCESS, RUNCLOCK_FAIL);
+			#endif
 				procReturn = ERROR_PROC_ALGO;
 			}
 			else{
@@ -484,19 +484,19 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 			}
 			break;
 		case REPEAT:
-#ifdef	DEBUG_LEVEL_2
+			#ifdef	DEBUG_LEVEL_2
 			dbgu_putint(DBGU_L2_PROC, ENTER_REPEAT);
-#endif
-
+			#endif
+			
 			/************************************************************************
 			* REPEAT opcode is followed by the number of repeats.
 			* Then it start processing the transmission by calling proc_REPEAT().
 			************************************************************************/
 			temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
 			if(temp == PROC_FAIL){
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_PROC, NO_NUMBER_OF_REPEAT);
-#endif
+				#endif
 				procReturn = ERROR_PROC_ALGO;
 			}
 			else{
@@ -504,23 +504,23 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 				a_uiRowCount      = 1;
 				if(bufAlgo == 0)
 					procReturn = proc_REPEAT(bufAlgo, bufAlgoSize, 
-					&bufAlgoIndex, temp);
+						&bufAlgoIndex, temp);
 				else
 					procReturn = proc_REPEAT(&(bufAlgo[bufAlgoIndex]), 
-					bufAlgoSize, &bufAlgoIndex, temp);
+						bufAlgoSize, &bufAlgoIndex, temp);
 				a_uiCheckFailedRow = 0;
 				if(procReturn <= 0){
-#ifdef	DEBUG_LEVEL_1
+					#ifdef	DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_PROCESS, REPEAT_FAIL);
-#endif
+					#endif
 				}
 			}
 			break;
 		case LOOP:		
-#ifdef	DEBUG_LEVEL_2
+			#ifdef	DEBUG_LEVEL_2
 			dbgu_putint(DBGU_L2_PROC, ENTER_LOOP); 
-#endif
-
+			#endif
+			
 			/************************************************************************
 			* LOOP opcode is followed by the max number of looping, then it process
 			* the transmission by calling proc_LOOP().
@@ -528,9 +528,9 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 
 			temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
 			if(temp == PROC_FAIL){
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_PROC, NO_NUMBER_OF_LOOP);
-#endif
+				#endif
 				procReturn = ERROR_PROC_ALGO;
 			}
 			else{
@@ -541,28 +541,28 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 					procReturn = proc_LOOP(&(bufAlgo[bufAlgoIndex]), bufAlgoSize, &bufAlgoIndex, temp);
 				}
 				if(procReturn <= 0){
-#ifdef	DEBUG_LEVEL_1
+					#ifdef	DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_PROCESS, LOOP_FAIL);
-#endif
+					#endif
 					procReturn = ERROR_LOOP_COND;
 				}
 			}
 			break;
 		case WAIT:		/* process WAIT */
-#ifdef	DEBUG_LEVEL_2
+			#ifdef	DEBUG_LEVEL_2
 			dbgu_putint(DBGU_L2_PROC, ENTER_WAIT);"Enter WAIT", 
-#endif
+			#endif
+			
+			/************************************************************************
+			* WAIT opcode is followed by wait time in millisecond, then it process
+			* the wait by calling proc_WAIT().
+			************************************************************************/
 
-				/************************************************************************
-				* WAIT opcode is followed by wait time in millisecond, then it process
-				* the wait by calling proc_WAIT().
-				************************************************************************/
-
-				temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
+			temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
 			if(temp == PROC_FAIL){
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_PROC, NO_NUMBER_OF_WAIT);
-#endif
+				#endif
 				procReturn = ERROR_PROC_ALGO;
 			}
 			else{
@@ -571,27 +571,27 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 			break;
 		case RESETDATA:
 			if(!dataReset(1)){
-#ifdef	DEBUG_LEVEL_1
+				#ifdef	DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_PROCESS, RESETDATA_FAIL);
-#endif
+				#endif
 				procReturn = ERROR_PROC_DATA;
 			}
 			break;
 		case ENDTRAN:
 			if(!TRANS_endtranx()){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_TRANX_PROC, ENDTRAN_FAIL);
-#endif
+				#endif
 				procReturn = ERROR_PROC_HARDWARE;
 			}
 			break;
 		case ENDOFALGO:
-#ifdef	DEBUG_LEVEL_2
+			#ifdef	DEBUG_LEVEL_2
 			if(bufAlgo != 0)
 				dbgu_putint(DBGU_L2_PROC, END_PROC_BUFFER);
 			else
 				dbgu_putint(DBGU_L2_PROC, END_PROC);
-#endif
+			#endif
 			procReturn = PROC_OVER;
 			break;
 		case TRSTTOGGLE:
@@ -599,9 +599,9 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 			procReturn = TRANS_trsttoggle(temp);
 			break;
 		default:
-#ifdef	DEBUG_LEVEL_1
+			#ifdef	DEBUG_LEVEL_1
 			dbgu_putint(DBGU_L1_ALGO_PROC, UNRECOGNIZED_OPCODE);/*"Unrecognized opcode" */
-#endif
+			#endif
 			return ERROR_PROC_ALGO;
 			break;
 		}
@@ -660,22 +660,10 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 		switch (currentByte){
 			case HCOMMENT:
 				if(proc_HCOMMENT(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0) == PROC_FAIL){
-#ifdef	DEBUG_LEVEL_1
+					#ifdef	DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_ALGO_PROC, COMMENT_END_UNEXPECTED);
-#endif
+					#endif
 					return ERROR_PROC_ALGO;
-				}
-				break;
-			case RUNCLOCK:
-				temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
-				if(temp == PROC_FAIL){
-	#ifdef	DEBUG_LEVEL_1
-					dbgu_putint(DBGU_L1_ALGO_PROC, NO_NUMBER_OF_WAIT);
-	#endif
-					return ERROR_PROC_ALGO;
-				}
-				else{
-					TRANS_runClk(temp);
 				}
 				break;
 			case WAIT:
@@ -686,26 +674,38 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 
 				temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
 				if(temp == PROC_FAIL){
-#ifdef	DEBUG_LEVEL_1
+					#ifdef	DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_ALGO_PROC, NO_NUMBER_OF_WAIT);//"No millisecond after WAIT", 
-#endif
+					#endif
 					return ERROR_PROC_ALGO;
 				}
 				else{
 					wait(temp);
 				}
 				break;
-				// since the proc system is Master SPI, it always transmit data out first
+			case RUNCLOCK:
+				temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
+				if(temp == PROC_FAIL){
+					#ifdef	DEBUG_LEVEL_1
+					dbgu_putint(DBGU_L1_ALGO_PROC, NO_NUMBER_OF_WAIT);
+					#endif
+					return ERROR_PROC_ALGO;
+				}
+				else{
+					TRANS_runClk(temp);
+				}
+				break;
+			// since the proc system is Master SPI, it always transmit data out first
 			case TRANSOUT:
-#ifdef DEBUG_LEVEL_2
+				#ifdef DEBUG_LEVEL_2
 				dbgu_putint(8,2);//"Enter TRANSOUT", 
-#endif
+				#endif
 				// get transmit size in bits, whether the data is compressed or not
 				trCount = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
 				if(trCount == PROC_FAIL){
-#ifdef DEBUG_LEVEL_1
+					#ifdef DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_ALGO_TRANX, NO_TRANSOUT_SIZE);//"No byte available at Size", 
-#endif
+					#endif
 					return ERROR_PROC_ALGO;		// no byte available at Size
 				}
 				byteNum = trCount / 8;
@@ -713,9 +713,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 					byteNum ++;
 				// check if the next Byte is DATA or DATAM
 				if(!VME_getByte(&currentByte, bufAlgo, bufAlgoSize, &bufAlgoIndex)){
-#ifdef DEBUG_LEVEL_1
-					dbgu_putint(DBGU_L1_ALGO_TRANX,NO_TRANSOUT_TYPE);//"Algo error: no byte available at DATA type", 
-#endif
+						#ifdef DEBUG_LEVEL_1
+						dbgu_putint(DBGU_L1_ALGO_TRANX,NO_TRANSOUT_TYPE);//"Algo error: no byte available at DATA type", 
+						#endif
 					return ERROR_PROC_ALGO;		// no byte available at DATA type
 				}
 				if( currentByte == ALGODATA)
@@ -724,17 +724,17 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 					// buffer transmit bytes
 					for(i=0; i< byteNum; i++){
 						if(!VME_getByte(&(trBuffer[i]), bufAlgo, bufAlgoSize, &bufAlgoIndex)){
-#ifdef DEBUG_LEVEL_1
+							#ifdef DEBUG_LEVEL_1
 							dbgu_putint(DBGU_L1_ALGO_TRANX, NO_TRANSOUT_DATA);//"Algo error: no byte available for transmit",
-#endif
+							#endif
 							return ERROR_PROC_ALGO;
 						}
 					}
 					retVal = TRANS_transceive_stream(trCount, trBuffer, 0, NO_DATA, 0, flag_mask, maskBuffer);
 					if( retVal <= 0 && retVal != ERROR_VERIFICATION ){
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_OPCODE_FAIL);
-#endif
+						#endif
 						return retVal;
 					}
 				}
@@ -742,18 +742,18 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				{
 					retVal = TRANS_transceive_stream(0, trBuffer, trCount, DATA_TX, &currentByte, flag_mask, maskBuffer);
 					if(retVal <= 0){
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_OUT_PROG_FAIL);
-#endif
+						#endif
 						return retVal;
 					}
 
 				}
 				else
 				{
-#ifdef DEBUG_LEVEL_1
+					#ifdef DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_ALGO_TRANX,NO_TRANSOUT_TYPE);//"Algo error: no byte available at DATA type", 
-#endif
+					#endif
 					return ERROR_PROC_ALGO;		// no byte available at DATA type
 				}
 				flag_transin = 0;
@@ -763,9 +763,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				{
 					retVal = TRANS_transceive_stream(0, 0, trCount, BUFFER_TX, trBuffer,flag_mask, maskBuffer);
 					if(retVal <= 0){
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_OUT_ALGO_FAIL); 
-#endif
+						#endif
 						return retVal;
 					}
 				}
@@ -773,20 +773,20 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				{
 					retVal = TRANS_transceive_stream(0, 0, trCount, BUFFER_RX, trBuffer, flag_mask, maskBuffer);
 					if(retVal <= 0 && retVal != ERROR_VERIFICATION){
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_IN_ALGO_FAIL);//"Transmit error: unable to transmit", 
-#endif
+						#endif
 						return retVal;
 					}
 
 					for(i=0; i< byteNum; i++){
 						if(!VME_getByte(&currentByte, bufAlgo, bufAlgoSize, &bufAlgoIndex)){
-#ifdef DEBUG_LEVEL_1
+							#ifdef DEBUG_LEVEL_1
 							dbgu_putint(DBGU_L1_ALGO_TRANX, NO_TRANSIN_DATA);//"Algo error: no byte available for transmit", 
-#endif
+							#endif
 							return ERROR_PROC_ALGO;
 						}
-
+										
 						if(flag_mask)
 						{
 							trBuffer[i] = trBuffer[i] & maskBuffer[i];
@@ -805,9 +805,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				{
 					retVal = TRANS_transceive_stream(0, trBuffer, trCount, DATA_TX, 0, flag_mask, maskBuffer);
 					if(retVal <= 0){
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_OUT_PROG_FAIL);
-#endif
+						#endif
 						return retVal;
 					}
 				}
@@ -815,9 +815,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				{
 					retVal = TRANS_transceive_stream(0, trBuffer, trCount, DATA_RX, 0, flag_mask, maskBuffer);
 					if(retVal <= 0 && retVal != ERROR_VERIFICATION){
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_IN_PROG_FAIL);//"Transmit error: unable to transmit", 
-#endif
+						#endif
 						return retVal;
 					}
 				}	
@@ -827,9 +827,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				{
 					retVal = TRANS_transceive_stream(0, trBuffer, trCount, DATA_TX, &currentByte,flag_mask, maskBuffer);
 					if(retVal <= 0){
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_OUT_PROG_FAIL);
-#endif
+						#endif
 						return retVal;
 					}
 				}
@@ -837,16 +837,16 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				{
 					retVal = TRANS_transceive_stream(0, trBuffer, trCount, DATA_RX, &currentByte, flag_mask, maskBuffer);
 					if(retVal <= 0 && retVal != ERROR_VERIFICATION){
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_IN_PROG_FAIL);//"Transmit error: unable to transmit", 
-#endif
+						#endif
 						return retVal;
 					}
 					else if(retVal <= 0 && retVal == ERROR_VERIFICATION)
 					{
-#ifdef DEBUG_LEVEL_1
+						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_IN_PROG_FAIL);//"Transmit error: unable to transmit", 
-#endif
+						#endif
 						mismatch = 1;
 					}
 				}
@@ -854,9 +854,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 			case TRANSIN:
 				trCount = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
 				if(trCount == PROC_FAIL){
-#ifdef DEBUG_LEVEL_1
+					#ifdef DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_ALGO_TRANX, NO_TRANSIN_SIZE);//"No byte available at Size", 
-#endif
+					#endif
 					return ERROR_PROC_ALGO;		// no byte available at Size
 				}
 
@@ -869,9 +869,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				if(trCount <= MAX_MASKSIZE){
 					for(i = 0; i< byteNum; i++){
 						if(!VME_getByte(&(maskBuffer[i]), bufAlgo, bufAlgoSize, &bufAlgoIndex)){
-#ifdef DEBUG_LEVEL_1
+							#ifdef DEBUG_LEVEL_1
 							dbgu_putint(DBGU_L1_ALGO_TRANX, NO_TRANSIN_MASK);//"No byte available at Mask", 
-#endif
+							#endif
 							return ERROR_PROC_ALGO;		// no byte available at Mask
 						}
 					}
@@ -880,9 +880,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				break;
 			case ENDTRAN:
 				if(!TRANS_endtranx()){
-#ifdef DEBUG_LEVEL_1
+					#ifdef DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_TRANX_PROC, ENDTRAN_FAIL);
-#endif
+					#endif
 					return ERROR_PROC_HARDWARE;
 				}
 				if(bufAlgo != 0)
@@ -901,9 +901,9 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				//************************************************************************
 				temp = VME_getNumber(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0);
 				if(temp == PROC_FAIL){
-#ifdef	DEBUG_LEVEL_1
+					#ifdef	DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_ALGO_PROC, NO_NUMBER_OF_REPEAT);
-#endif
+					#endif
 					return ERROR_PROC_ALGO;
 				}
 				else{
@@ -912,18 +912,18 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 					else
 						retVal = proc_REPEAT(&(bufAlgo[bufAlgoIndex]), bufAlgoSize, &bufAlgoIndex, temp);
 					if(retVal <= 0){
-#ifdef	DEBUG_LEVEL_1
+						#ifdef	DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_PROCESS, REPEAT_FAIL);
-#endif
+						#endif
 						return ERROR_PROC_ALGO;	
 					}
 				}
 				break;
 			case RESETDATA:
 				if(!dataReset(1)){
-#ifdef	DEBUG_LEVEL_1
+					#ifdef	DEBUG_LEVEL_1
 					dbgu_putint(DBGU_L1_PROCESS, RESETDATA_FAIL);// fail to reset data
-#endif
+					#endif
 					retVal = ERROR_PROC_DATA;
 				}
 				break;
@@ -938,17 +938,17 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 					else
 						return PROC_COMPLETE;
 				}
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_ALGO_TRANX, UNRECOGNIZED_OPCODE);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 				break;
 		}
 		if(!VME_getByte(&currentByte, bufAlgo, bufAlgoSize, &bufAlgoIndex)){
-#ifdef DEBUG_LEVEL_1
-			dbgu_putint(DBGU_L1_ALGO_TRANX, NO_TRANX_OPCODE);
-#endif
-			return ERROR_PROC_ALGO;
+				#ifdef DEBUG_LEVEL_1
+				dbgu_putint(DBGU_L1_ALGO_TRANX, NO_TRANX_OPCODE);
+				#endif
+				return ERROR_PROC_ALGO;
 		}
 	}
 	if(bufAlgo != 0)
@@ -958,22 +958,22 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 		return retVal;
 
 	if(mismatch){
-#ifdef DEBUG_LEVEL_1
+		#ifdef DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_TRANX_PROC, COMPARE_FAIL);
 		// internal debugging
 		dbgu_putint(8,mismatch);
-#ifdef DEBUG_LEVEL_3
+		#ifdef DEBUG_LEVEL_3
 		for (i=0; i<4; i++){
 			dbgu_putint(2,(unsigned int)(trBuffer[i] >> 4));//"Mismatch occurs", 
 			dbgu_putint(2,(unsigned int)(trBuffer[i] & 0x0f));//"Mismatch occurs", 
 		}
-#endif
-#endif
+		#endif
+		#endif
 		return ERROR_VERIFICATION;
 	}
 	else
 		return PROC_COMPLETE;
-
+	
 }
 
 /************************************************************************
@@ -1003,8 +1003,8 @@ int proc_REPEAT(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 	unsigned char		currentByte  = 0;
 	unsigned int		bufAlgoIndex = 0;
 	int					flag         = 1;	/* initialize to 1 for counting / buffering algo */
-	/* when processing loop, flag becomes the condition */
-	/* whether the loop succeed or fail. */
+										    /* when processing loop, flag becomes the condition */
+										    /* whether the loop succeed or fail. */
 
 
 	int i = 0;
@@ -1020,26 +1020,26 @@ int proc_REPEAT(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 	}
 	else
 		bufferPtr = bufAlgo;
-#ifdef DEBUG_LEVEL_2
+	#ifdef DEBUG_LEVEL_2
 	dbgu_putint(DBGU_L2_REPEAT, PREPARE_BUFFER);
-#endif
+	#endif
 	do{
 		if(!VME_getByte(&currentByte, bufAlgo, bufAlgoSize, &bufAlgoIndex)){
-#ifdef DEBUG_LEVEL_1
+			#ifdef DEBUG_LEVEL_1
 			dbgu_putint(DBGU_L1_REPEAT, BUFFER_FAIL);
-#endif
+			#endif
 			return ERROR_PROC_ALGO;			
 		}
 		if(currentByte == HCOMMENT){
 			if(proc_HCOMMENT(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0) == PROC_FAIL){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_REPEAT, REPEAT_COMMENT_FAIL);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			}
 		}
 		/* nested LOOP / REPEAT check
-		if currentByte is LOOP or REPEAT, nested loop, put in stack */
+		   if currentByte is LOOP or REPEAT, nested loop, put in stack */
 		else if(currentByte == LOOP || currentByte == REPEAT)
 		{
 			stack[stackIndex] = currentByte;
@@ -1051,21 +1051,21 @@ int proc_REPEAT(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 			if(stackIndex == 0)
 				flag = 0;		/* end of loop */
 			else if(stack[stackIndex-1] != REPEAT){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_REPEAT, STACK_MISMATCH);/* Stack mismatch when buffering REPEAT */ 
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			} 							
 			else
 				stackIndex--;
 		}
 		/* if currentByte is ENDLOOP, check if its end of loop, 
-		or pop from stack if its end of nested loop */
+		   or pop from stack if its end of nested loop */
 		else if(currentByte == ENDLOOP){
 			if(stackIndex == 0 || stack[stackIndex-1] != LOOP){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_REPEAT, STACK_MISMATCH);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			}
 			else
@@ -1074,9 +1074,9 @@ int proc_REPEAT(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 		/* discard comment for buffering */
 		if(flag == 1 && currentByte != HCOMMENT){
 			if(bufferSize > MAXBUF){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_REPEAT , REPEAT_SIZE_EXCEED);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			}
 			else{
@@ -1087,31 +1087,31 @@ int proc_REPEAT(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 		}
 	}while(flag == 1);
 
-#ifdef DEBUG_LEVEL_2
+	#ifdef DEBUG_LEVEL_2
 	dbgu_putint(DBGU_L2_REPEAT, FINISH_BUFFER);/* End calculate REPEAT size, and buffer REPEAT */
-#endif
+	#endif
 	bufAlgoIndex = 0;
 	/* process REPEAT */
 	flag = 0;
 	loopCount = 0;
-#ifdef DEBUG_LEVEL_2
+	#ifdef DEBUG_LEVEL_2
 	dbgu_putint(DBGU_L2_REPEAT, START_PROC_REPEAT);
-#endif
+	#endif
 	do{
 		flag = SSPIEm_process(bufferPtr, bufferSize);
 		loopCount ++;
 	}while(flag == PROC_OVER && loopCount < LoopMax);
 	if(flag <= 0){
-#ifdef DEBUG_LEVEL_1
+		#ifdef DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_REPEAT, REPEAT_COND_FAIL); /* REPEAT condition fails */
-#endif
+		#endif
 		(*absBufAlgoIndex) += bufferSize + 1;
 		return flag;
 	}
 	else{
-#ifdef DEBUG_LEVEL_2
+		#ifdef DEBUG_LEVEL_2
 		dbgu_putint(DBGU_L2_REPEAT, END_PROC_REPEAT); /* End processing REPEAT */
-#endif
+		#endif
 		(*absBufAlgoIndex) += bufferSize + 1;
 		return PROC_COMPLETE;
 	}
@@ -1157,8 +1157,8 @@ int proc_LOOP(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 	unsigned char		currentByte    = 0;
 	unsigned int		bufAlgoIndex   = 0;
 	int		            flag           = 1; /* initialize to 1 for counting / buffering algo */
-	/*when processing loop, flag becomes the condition */
-	/*whether the loop succeed or fail. */
+										    /*when processing loop, flag becomes the condition */
+										    /*whether the loop succeed or fail. */
 
 
 	int i = 0;
@@ -1174,21 +1174,21 @@ int proc_LOOP(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 	}
 	else
 		bufferPtr = bufAlgo;
-#ifdef DEBUG_LEVEL_2
+	#ifdef DEBUG_LEVEL_2
 	dbgu_putint(DBGU_L2_LOOP, PREPARE_BUFFER);
-#endif
+	#endif
 	do{
 		if(!VME_getByte(&currentByte, bufAlgo, bufAlgoSize, &bufAlgoIndex)){
-#ifdef DEBUG_LEVEL_1
+			#ifdef DEBUG_LEVEL_1
 			dbgu_putint(DBGU_L1_LOOP, BUFFER_FAIL); 
-#endif
+			#endif
 			return ERROR_PROC_ALGO;			
 		}
 		if(currentByte == HCOMMENT){
 			if(proc_HCOMMENT(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0) == PROC_FAIL){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_REPEAT, LOOP_COMMENT_FAIL);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			}
 		}
@@ -1198,23 +1198,23 @@ int proc_LOOP(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 		}
 		else if(currentByte == ENDREPEAT){
 			if(stackIndex == 0 || stack[stackIndex-1] != REPEAT){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_LOOP, STACK_MISMATCH);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			}
 			else
 				stackIndex--;
 		}
 		/* if currentByte is ENDLOOP, check if its end of loop, 
-		or pop from stack if its end of nested loop */
+		   or pop from stack if its end of nested loop */
 		else if(currentByte == ENDLOOP){
 			if(stackIndex == 0)
 				flag = 0;
 			else if(stack[stackIndex-1] != LOOP){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_LOOP, STACK_MISMATCH);
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			} 							
 			else
@@ -1223,9 +1223,9 @@ int proc_LOOP(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 		/* discard comment for buffering */
 		if(flag == 1 && currentByte != HCOMMENT){
 			if(bufferSize > MAXBUF){
-#ifdef DEBUG_LEVEL_1
+				#ifdef DEBUG_LEVEL_1
 				dbgu_putint(DBGU_L1_LOOP, LOOP_SIZE_EXCEED);/* Loop size exceed Maximum Buffer size */
-#endif
+				#endif
 				return ERROR_PROC_ALGO;
 			}
 			else{
@@ -1235,31 +1235,31 @@ int proc_LOOP(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 			}
 		}
 	}while(flag == 1);
-#ifdef DEBUG_LEVEL_2
+	#ifdef DEBUG_LEVEL_2
 	dbgu_putint(DBGU_L2_LOOP, FINISH_BUFFER); /* End calculate LOOP size, and buffer LOOP */
-#endif
+	#endif
 	bufAlgoIndex = 0;
 	/* process loop */
 	flag = 0;
 	loopCount = 0;
-#ifdef DEBUG_LEVEL_2
+	#ifdef DEBUG_LEVEL_2
 	dbgu_putint(DBGU_L2_LOOP, START_PROC_LOOP);
-#endif
+	#endif
 	do{
 		flag = SSPIEm_process(bufferPtr, bufferSize);
 		loopCount ++;
 	}while(flag <= 0 && loopCount < LoopMax);
 	if(flag <= 0){
-#ifdef DEBUG_LEVEL_1
+		#ifdef DEBUG_LEVEL_1
 		dbgu_putint(DBGU_L1_LOOP, LOOP_COND_FAIL); /*LOOP condition not met */
-#endif
+		#endif
 		(*absBufAlgoIndex) += bufferSize + 1;
 		return flag;
 	}	
 	else{
-#ifdef DEBUG_LEVEL_2
+		#ifdef DEBUG_LEVEL_2
 		dbgu_putint(DBGU_L2_LOOP, END_PROC_LOOP); /*End processing LOOP */ 
-#endif
+		#endif
 		(*absBufAlgoIndex) += bufferSize + 1;
 		return PROC_COMPLETE;
 	}
@@ -1307,16 +1307,16 @@ int VME_getByte(unsigned char * byteOut, unsigned char * bufAlgo,
 				unsigned int bufAlgoSize, unsigned int * bufAlgoIndex)
 {
 	if(bufAlgo == 0){
-#ifdef DEBUG_LEVEL_3
+		#ifdef DEBUG_LEVEL_3
 		dbgu_putint(12,1);
-#endif
+		#endif
 		algoGetByte(byteOut);
 		return 1;
 	}
 	else{
-#ifdef DEBUG_LEVEL_3
+		#ifdef DEBUG_LEVEL_3
 		dbgu_putint(12,2); 
-#endif
+		#endif
 		if(*bufAlgoIndex < bufAlgoSize){
 			*byteOut = bufAlgo[(*bufAlgoIndex)];
 			(*bufAlgoIndex)++;
@@ -1332,7 +1332,7 @@ int VME_getByte(unsigned char * byteOut, unsigned char * bufAlgo,
 *
 ***************************************************************************/
 unsigned int VME_getNumber(unsigned char * bufAlgo, unsigned int bufAlgoSize, 
-						   unsigned int * bufAlgoIndex, unsigned int *byteCount)
+				  unsigned int * bufAlgoIndex, unsigned int *byteCount)
 {
 	unsigned char byteIn = 0x80;
 	unsigned int output  = 0;

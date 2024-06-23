@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{54f2e31b-52b9-4a9f-b776-594cae63db52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\reedl">
+      <UniqueIdentifier>{e2a96980-b8c0-4a01-97db-79485b204920}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="buildin.h" />
+    <ClInclude Include="..\src\core.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\debug.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\hardware.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\intrface.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\opcode.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\SSPIEm.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\util.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\reedl-ictrl.h">
+      <Filter>src\reedl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\reedl-utils.h">
+      <Filter>src\reedl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\reedl-generic.h">
+      <Filter>src\reedl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\reedl-ictrl-cmd.h">
+      <Filter>src\reedl</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="build.sh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\core.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\hardware.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intrface.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SSPIEm.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\util.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\reedl-ictrl.c">
+      <Filter>src\reedl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\reedl-utils.c">
+      <Filter>src\reedl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\reedl-ictrl-cmd.c">
+      <Filter>src\reedl</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
