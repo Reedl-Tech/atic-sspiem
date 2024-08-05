@@ -9,6 +9,7 @@
 * 2008/01/25	Beta complete
 *
 **********************************************************************/
+#include <stdio.h>	// sprintf
 
 #include "core.h"
 #include "hardware.h"
@@ -16,6 +17,10 @@
 #include "opcode.h"
 #include "debug.h"
 #include "util.h"
+
+extern void print_out_string(char* stringOut);
+#define ERR_LOG(x) print_out_string(x)
+extern char g_Message[512];
 
 /************************************************************************
 *
@@ -772,13 +777,13 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 				else
 				{
 					retVal = TRANS_transceive_stream(0, 0, trCount, BUFFER_RX, trBuffer, flag_mask, maskBuffer);
-					if(retVal <= 0 && retVal != ERROR_VERIFICATION){
+ 					if(retVal <= 0 && retVal != ERROR_VERIFICATION){
 						#ifdef DEBUG_LEVEL_1
 						dbgu_putint(DBGU_L1_TRANX_PROC, TRANX_IN_ALGO_FAIL);//"Transmit error: unable to transmit", 
 						#endif
 						return retVal;
 					}
-
+					int idx = sprintf(g_Message, "=====*= expected: ");
 					for(i=0; i< byteNum; i++){
 						if(!VME_getByte(&currentByte, bufAlgo, bufAlgoSize, &bufAlgoIndex)){
 							#ifdef DEBUG_LEVEL_1
@@ -797,6 +802,18 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 
 						if(trBuffer[i] != currentByte)
 							mismatch ++;
+
+
+						if (trBuffer[i] != currentByte) {
+							idx += sprintf(&g_Message[idx], "%02X ", currentByte);
+						} else {
+							idx += sprintf(&g_Message[idx], ".. ");
+						}
+
+					}
+					if (mismatch) {
+						sprintf(&g_Message[idx], "\n");
+						print_out_string(g_Message);
 					}
 				}
 				break;

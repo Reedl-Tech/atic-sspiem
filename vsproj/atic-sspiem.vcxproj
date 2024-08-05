@@ -90,7 +90,9 @@
     <NMakeForcedIncludes>buildin.h</NMakeForcedIncludes>
     <RemoteBuildCommandLine>pwd &amp;&amp; ./build.sh compile</RemoteBuildCommandLine>
     <RemoteCleanCommandLine>pwd &amp;&amp; ./build.sh cleanstate</RemoteCleanCommandLine>
-    <RemoteBuildOutputs>../oe-workdir/atic-sspiem/atic-sspiem</RemoteBuildOutputs>
+    <RemoteBuildOutputs>../atic-sspiem</RemoteBuildOutputs>
+    <OutDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="..\src\reedl-ictrl-cmd.h" />
@@ -119,6 +121,9 @@
     <ClCompile Include="..\src\main.c" />
     <ClCompile Include="..\src\SSPIEm.c" />
     <ClCompile Include="..\src\util.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\CMakeLists.txt" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <PostBuildEvent>

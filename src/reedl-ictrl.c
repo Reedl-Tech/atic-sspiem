@@ -7,18 +7,24 @@
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/syslog.h>
 
+#include "debug.h"
 #define DBG_LOG_EN 1
 #define DBG_LVL LOG_DEBUG
 #include "reedl-generic.h"
 
 #include "reedl-utils.h"
 #include "reedl-ictrl.h"
+#include "reedl-ictrl-cmd.h"
+
+extern void print_out_string(char *stringOut);
 
 int g_terminate = 0;
+char g_Message[512];
 
 reedl_ictrl_t g_ictrl = {
     .cfg = {.port = "/dev/ttyACM1" }
@@ -131,7 +137,7 @@ static void ictrl_serial_on_idle(reedl_ictrl_serial_t *ictrl_serial)
 {
     // Try to connect to port if not connected
     if (-1 == ictrl_serial->fd_tty) {
-        ictrl_serial_tty_open(ictrl_serial);
+        reedl_ictrl_serial_open(ictrl_serial);
     }
 }
 
@@ -188,12 +194,12 @@ static void ictrl_serial_upstream_on_rx_crsp(ictrl_serial_upstream_t *stream)
     {
         uint64_t u = 1;
         memcpy(resp->data.crsp, crsp_hdr, max_len);
-        *(resp->err) = 0;
+        if (resp->err) *(resp->err) = 0;
         write(resp->fd_evt, &u, sizeof(uint64_t));
     }
 
     // Notification is a single-shot only. Flush after use.
-    memset(resp, 0, sizeof(reedl_crsp_t));          // !!! fd cleared ?
+    memset(resp, 0, sizeof(reedl_crsp_t));
 
     // Just for debug, clean RX buff
     memset(stream->rx_buff, 0xCC, sizeof(stream->rx_buff));
@@ -410,21 +416,21 @@ int reedl_ictrl_serial_set_fds(reedl_ictrl_serial_t *ictrl_serial, int fd_max,
 }
 
 int reedl_ictrl_serial_tx(reedl_ictrl_serial_t *ictrl_serial,
-                      uint8_t *data, uint32_t bytes_to_write, char *comment)
+                      uint8_t *data, uint32_t bytes_to_write, const char *comment)
 {
     int rc = 0;
     ssize_t written;
     if (-1 == ictrl_serial->fd_tty) {
-        DBG_ERR("ICTRL --> HOST: %ls ignored - not connected", comment);
+        DBG_ERR("HOST --> ICTRL: %s ignored - not connected", comment);
         rc = -1;
     } 
     if (!rc) {
         written = write(ictrl_serial->fd_tty, data, bytes_to_write);
         if (written != bytes_to_write) {
             rc = -2;
-            DBG_ERR("ICTRL --> HOST: error %d", errno);
+            DBG_ERR("HOST --> ICTRL: error %d", errno);
         } else {
-            DBG_LOG("ICTRL --> HOST: %ls", comment);
+            DBG_LOG("HOST --> ICTRL: %s", comment);
         }
     }
 
@@ -437,10 +443,12 @@ void reedl_ictrl_serial_subscribe_crsp(reedl_ictrl_serial_t* ictrl_serial,
 {
     reedl_crsp_t *resp = &ictrl_serial->receiver.streams[DBG_BUFF_IDX_CRSP].resp;
 
-    *(resp->err) = 0;
+    if (resp->err) {
+        *(resp->err) = 0;
+    }
     resp->data.raw = data;
     resp->max_len = max_len;
-    if (-1 != resp->fd_evt) {
+    if (-1 != resp->fd_evt && resp->fd_evt != fd_evt) {
         close(resp->fd_evt);
     }
     resp->fd_evt = fd_evt;
@@ -487,6 +495,40 @@ static void* reedl_ictrl_serial_thread(void* arg)
     reedl_ictrl_serial_loop(reedl_ictrl->serial);
 }
 
+int reedl_ictrl_init_sign_fpga()
+{
+    int rc;
+
+	const reedl_ictrl_crsp_fpga_sign_t* ictrl_fpga_sign = NULL;
+	rc = reedl_ictrl_fpga_sign(&ictrl_fpga_sign);
+
+	if (rc) return ERROR_INIT;
+
+    sprintf(g_Message,"FPGA signature:\n0x%04X v%d.%d (0x%04X), serial#:%d\n",
+        *(uint16_t*)ictrl_fpga_sign->sign,
+        ictrl_fpga_sign->ver[0], ictrl_fpga_sign->ver[1],
+        ictrl_fpga_sign->hash, ictrl_fpga_sign->serial);
+	print_out_string(g_Message);
+
+    return 0;
+}
+
+int reedl_ictrl_init_sign_fw()
+{
+    int rc;
+
+	const reedl_ictrl_crsp_signature_t* ictrl_signature = NULL;
+	rc = reedl_ictrl_sign(&ictrl_signature);
+
+	if (rc) return ERROR_INIT;
+
+	sprintf(g_Message,"\nDevice signature:\n%s. %s, hash - %s\n",
+		ictrl_signature->signature, ictrl_signature->ver, ictrl_signature->hash);
+	print_out_string(g_Message);
+
+    return 0;
+}
+
 int reedl_ictrl_init(const char *port_name)
 {
     int rc, ret;
@@ -513,14 +555,9 @@ int reedl_ictrl_init(const char *port_name)
 
     ret = pthread_attr_destroy(&attr);
 
+    rc |= reedl_ictrl_init_sign_fpga();
+    rc |= reedl_ictrl_init_sign_fw();
+	//  Read & check IMON voltages ?
 
-	// Sanity check
-	//	- Check ICTRL compatibility. Read & check ATIC signature.
-	//  - Check ATIC HW. Read & check IMON voltages
-	// Put FPGA into default state
-	//  - CDONE control
-	//  - RST control
-    
-
-    return ret;
+    return rc;
 }

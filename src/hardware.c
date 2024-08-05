@@ -10,6 +10,8 @@
 ***********************************************************************/
 #if __linux__
 #include <unistd.h>	// usleep
+#include <stdio.h>	// sprintf
+
 #endif
 
 #include "intrface.h"
@@ -19,7 +21,15 @@
 
 #include "reedl-ictrl-cmd.h"
 
+extern void print_out_string(char *stringOut);
 #define ERR_LOG(x) print_out_string(x)
+int trCount_max = 0;
+int rxCount_max = 0;
+int runclk_max = 0;
+extern char g_Message[512];
+
+static int cs_state;
+
 /***********************************************************************
 *
 * Global variables.
@@ -153,6 +163,7 @@ unsigned char dataBuffer[1024];
 int SPI_init()
 {
 	int rc;
+	cs_state = 1;		// By default CS is in inactive state
 	rc = reedl_ictrl_sspiem_init(1);		
 	if (rc) {
 		ERR_LOG("Can't init sspiem\n");
@@ -175,6 +186,10 @@ int SPI_init()
 ************************************************************************/
 int SPI_final()
 {
+	int rc;
+	ERR_LOG("=*= Final \n");
+	rc = reedl_ictrl_sspiem_init(0);	// Try to restore FPGA back to normal operation
+
 	return 1;
 }
 
@@ -227,7 +242,9 @@ int SPI_final()
 int wait(int a_msTimeDelay)
 {
 #if __linux__
+	a_msTimeDelay = 1;	// AV: 10ms requested actualy -> 40. It is too much
 	usleep(a_msTimeDelay * 1000);
+
 #endif
 #if 0
 	unsigned short loop_index     = 0;
@@ -249,6 +266,9 @@ int wait(int a_msTimeDelay)
 		}
 	}
 #endif
+	sprintf(g_Message, "=*=    wait (%d)\n", a_msTimeDelay);
+	ERR_LOG(g_Message);
+
 	return 1;
 }
 
@@ -268,6 +288,22 @@ int wait(int a_msTimeDelay)
 ************************************************************************/
 int TRANS_transmitBytes(unsigned char *trBuffer, int trCount)
 {
+	int rc;
+	trCount = trCount >> 3;
+	if (trCount_max < trCount) trCount_max = trCount;
+
+	int idx = sprintf(g_Message, "=====*= TX %d (%d): ", trCount, trCount_max);
+	for (int i = 0; i < trCount; i++) {
+		idx += sprintf(&g_Message[idx], "%02X ", trBuffer[i]);
+	}
+	sprintf(&g_Message[idx], "\n");
+	ERR_LOG(g_Message);
+
+	rc = reedl_ictrl_sspiem_write(trBuffer, trCount);
+	if (rc) {
+		ERR_LOG("Can't transmit\n");
+		return -1;
+	}
 	return 1;
 }
 
@@ -287,6 +323,25 @@ int TRANS_transmitBytes(unsigned char *trBuffer, int trCount)
 *********************************************************************/
 int TRANS_receiveBytes(unsigned char *rcBuffer, int rcCount)
 {
+	int rc;
+	rcCount = rcCount >> 3;
+	if (rxCount_max < rcCount) rxCount_max = rcCount;
+
+	int idx = sprintf(g_Message, "=====*= RX %d (%d): ", rcCount, rxCount_max);
+
+	rc = reedl_ictrl_sspiem_read(rcBuffer, rcCount);
+
+	for (int i = 0; i < rcCount; i++) {
+		idx += sprintf(&g_Message[idx], "%02X ", rcBuffer[i]);
+	}
+	sprintf(&g_Message[idx], "\n");
+	print_out_string(g_Message);
+
+	if (rc) {
+		ERR_LOG("Can't receive\n");
+		return -1;
+	}
+
 	return 1;
 }
 
@@ -306,6 +361,17 @@ int TRANS_receiveBytes(unsigned char *rcBuffer, int rcCount)
 **********************************************************************/	
 int TRANS_starttranx(unsigned char channel)
 {
+	int rc;
+	ERR_LOG("===*= CS EN\n");
+
+	cs_state = 0;
+	rc = reedl_ictrl_sspiem_cs(cs_state);
+
+	if (rc) {
+		ERR_LOG("Can't CS\n");
+		return 0;
+	}
+
 	return 1;
 }
 /************************************************************************
@@ -324,7 +390,19 @@ int TRANS_starttranx(unsigned char channel)
 **********************************************************************/
 int TRANS_endtranx()
 {
+	int rc;
+	ERR_LOG("===*= CS DIS\n");
+
+	cs_state = 1;
+	rc = reedl_ictrl_sspiem_cs(cs_state);
+
+	if (rc) {
+		ERR_LOG("Can't CS\n");
+		return 0;
+	}
+
 	return 1;
+
 }
 /************************************************************************
 * Function TRANS_trsttoggle(unsigned char toggle)
@@ -336,11 +414,24 @@ int TRANS_endtranx()
 *************************************************************************/
 int TRANS_trsttoggle(unsigned char toggle)
 {
+	int rc;
 	/*********************************************************************
 	* here you should implement toggling CRESET signal.
 	*
 	* Currently it prints message on screen and in log file.
 	**********************************************************************/
+	if (toggle) {
+		ERR_LOG("=*= Reset 1\n");
+	}
+	else {
+		ERR_LOG("=*= Reset 0\n");
+	}
+	rc = reedl_ictrl_sspiem_reset(toggle);
+	if (rc) {
+		ERR_LOG("Can't toggle reset\n");
+		return 0;
+	}
+
 	return 1;
 }
 /************************************************************************
@@ -356,6 +447,8 @@ int TRANS_trsttoggle(unsigned char toggle)
 *************************************************************************/
 int TRANS_cstoggle(unsigned char channel)
 {
+	ERR_LOG("===*= CS toggle\n");
+
 	if(channel != 0x00)
 		return 0;
 	else{
@@ -364,6 +457,9 @@ int TRANS_cstoggle(unsigned char channel)
 	*
 	* Currently it prints message on screen and in log file.
 	**********************************************************************/
+
+		cs_state = !cs_state;
+		reedl_ictrl_sspiem_cs(cs_state);
 
 		return 1;
 	}
@@ -386,6 +482,17 @@ int TRANS_cstoggle(unsigned char channel)
 **********************************************************************/
 int TRANS_runClk(int clk)
 {
+	if (runclk_max < clk) runclk_max = clk;
+	int rc = reedl_ictrl_sspiem_runclk();
+
+	sprintf(g_Message, "===*= Runclk (%d)\n", clk);
+	ERR_LOG(g_Message);
+
+	if (rc) {
+		ERR_LOG("Can't run the clocks\n");
+		return -1;
+	}
+
 	return 1;
 }
 /************************************************************************

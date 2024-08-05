@@ -30,7 +30,7 @@
 #include "reedl-ictrl.h"
 #include "reedl-ictrl-cmd.h"
 #endif
-
+int wait(int a_msTimeDelay);
 /***************************************************************
 *
 * Supported SSPIEm versions.
@@ -191,21 +191,30 @@ int main( int argc, char * argv[] )
 		print_out_string("Can't init REEDL ICTRL\n");
 		return ERROR_INIT;
 	}
+#endif
 
-	{
-		reedl_ictrl_crsp_signature_t* ictrl_signature = NULL;
+	uint8_t tr1_out[8] = {0xA4, 0xC6, 0xF4, 0x8A};
+	uint8_t readid_inout[8]     = {0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	uint8_t readstatus_inout[8] = {0x3C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-		rc = reedl_ictrl_sign(&ictrl_signature);
+	uint8_t tr_in[8] = {-1};
+	rc = 0;
 
-		if (rc) return ERROR_INIT;
-
-		sprintf(Message,"Device signature:\n%s. HW %d.%d, FW %d.%d\n",
-			ictrl_signature->signature,
-			ictrl_signature->ver_hw >> 4, ictrl_signature->ver_hw & 0x0F,
-			ictrl_signature->ver_fw >> 4, ictrl_signature->ver_fw & 0x0F);
-		print_out_string(Message);
-	}
-	
+#if 0
+	// AV: it alway returns zeros :(
+	rc |= reedl_ictrl_sspiem_init(1);
+	rc |= reedl_ictrl_sspiem_reset(1);
+	rc |= reedl_ictrl_sspiem_reset(0);
+	rc |= reedl_ictrl_sspiem_runclk();
+	rc |= reedl_ictrl_sspiem_write(&tr1_out[0], 4);
+	rc |= reedl_ictrl_sspiem_reset(0);
+	rc |= reedl_ictrl_sspiem_reset(1);
+	wait(10);
+	rc |= reedl_ictrl_sspiem_write(&readstatus_inout[0], 8);
+	rc |= reedl_ictrl_sspiem_write(&readid_inout[0], 8);
+	rc |= reedl_ictrl_sspiem_write(&readid_inout[0], 4);
+	rc |= reedl_ictrl_sspiem_read(&readid_inout[4], 4);
+	rc = reedl_ictrl_sspiem_init(0);
 #endif
 
 	siRetCode = SSPIEm_preset(argv[ 1 ], argv[ 2 ]);

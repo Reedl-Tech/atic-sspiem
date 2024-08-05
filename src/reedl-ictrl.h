@@ -12,6 +12,14 @@
 
 #define ICTRL_SERIAL_UPSTREAM_HDR_SIZE 1
 
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t mark;
+    uint8_t act;
+    uint8_t size;
+} crsp_hdr_t;
+#pragma pack(pop)
+
 typedef struct {
     const char *port;
 } reedl_ictrl_serial_cfg_t;
@@ -24,8 +32,8 @@ typedef struct {
                             // (aka subscriber) to a buffer with size max_len.
     ssize_t max_len;        // 
     int fd_evt;             // Notification event fd.
-    int *err;               // Pointer to error code. Provided by sender updated
-                            // by ictrl_serial
+    int *err;               // Pointer to error code. Provided by sender,
+                            // updated by ictrl_serial. Not is use so far.
 } reedl_crsp_t;
 
 typedef struct ictrl_serial_upstream_s {
@@ -90,14 +98,6 @@ typedef struct {
 
 #pragma pack(push, 1)
 typedef struct {
-    uint8_t mark;
-    uint8_t act;
-    uint8_t size;
-} crsp_hdr_t;
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-typedef struct {
     uint8_t type;
     uint8_t size;
 } imud_hdr_t;
@@ -134,12 +134,12 @@ void reedl_ictrl_serial_check_fds(reedl_ictrl_serial_t *ictrl_serial,
 int reedl_ictrl_serial_set_fds(reedl_ictrl_serial_t *ictrl_serial, int fd_max,
                                   fd_set *rd_fds, fd_set *wr_fds);
 
-int reedl_ictrl_serial_subscribe_crsp(reedl_ictrl_serial_t* ictrl_serial,
+void reedl_ictrl_serial_subscribe_crsp(reedl_ictrl_serial_t* ictrl_serial,
     uint8_t* data, uint32_t max_len, int fd_evt);
 
 int reedl_ictrl_serial_tx(reedl_ictrl_serial_t *ictrl_serial,
                              uint8_t *data, uint32_t bytes_to_write,
-                             char *comment);
+                             const char *comment);
 
 int reedl_ictrl_serial_open(reedl_ictrl_serial_t* ictrl_serial);
 
