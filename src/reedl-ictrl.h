@@ -61,7 +61,7 @@ typedef struct reedl_ictrl_serial_s {
     int fd_idle_timer;
 
     int fd_tty;
-    uint8_t tty_rx_buf[4096];
+    uint8_t tty_rx_buf[256];    // for SSPIEm maximum transaction size is 12bytes.
 
     ictrl_serial_rcv_t receiver;
 

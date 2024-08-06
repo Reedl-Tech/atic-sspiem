@@ -6,7 +6,7 @@ project(${BASENAME})
 
 set(CMAKE_C_STANDARD 99)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3 -O0") # Add debug information
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0") # Add debug information
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)

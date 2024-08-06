@@ -362,7 +362,7 @@ int TRANS_receiveBytes(unsigned char *rcBuffer, int rcCount)
 int TRANS_starttranx(unsigned char channel)
 {
 	int rc;
-	ERR_LOG("===*= CS EN\n");
+	// ERR_LOG("===*= CS EN\n");
 
 	cs_state = 0;
 	rc = reedl_ictrl_sspiem_cs(cs_state);
@@ -391,7 +391,7 @@ int TRANS_starttranx(unsigned char channel)
 int TRANS_endtranx()
 {
 	int rc;
-	ERR_LOG("===*= CS DIS\n");
+	// ERR_LOG("===*= CS DIS\n");
 
 	cs_state = 1;
 	rc = reedl_ictrl_sspiem_cs(cs_state);

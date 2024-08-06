@@ -115,7 +115,9 @@ int reedl_ictrl_serial_open(reedl_ictrl_serial_t *ictrl_serial)
         return -1;
     }
 
-    rc = ioctl(ictrl_serial->fd_tty, FIONBIO, &int_param, sizeof(int_param));
+    int flags = fcntl(ictrl_serial->fd_tty, F_GETFL, 0);
+    rc = fcntl(ictrl_serial->fd_tty, F_SETFL, flags | O_NONBLOCK);
+
     if (rc < 0) {
         DBG_ERR("Unable set FIONBIO on %s: %s", ictrl_serial->cfg.port,
                 strerror(errno));
@@ -198,8 +200,11 @@ static void ictrl_serial_upstream_on_rx_crsp(ictrl_serial_upstream_t *stream)
         write(resp->fd_evt, &u, sizeof(uint64_t));
     }
 
-    // Notification is a single-shot only. Flush after use.
-    memset(resp, 0, sizeof(reedl_crsp_t));
+    // Notification is a single-shot only. Flush after use. !!!!
+!!!
+ensure that _proc function won't be called until next subscription
+Don't  close resp file descritor. It will be closed by originator.
+//    memset(resp, 0, sizeof(reedl_crsp_t));
 
     // Just for debug, clean RX buff
     memset(stream->rx_buff, 0xCC, sizeof(stream->rx_buff));
@@ -343,6 +348,7 @@ reedl_ictrl_serial_t *reedl_ictrl_serial_init(reedl_ictrl_serial_cfg_t *cfg)
         stream->idx = i;
         stream->wr_idx = 0;
         memset(stream->rx_buff, 0, sizeof(stream->rx_buff));
+        stream->resp.fd_evt = -1;
     }
 
     /* Register streams */
@@ -448,9 +454,7 @@ void reedl_ictrl_serial_subscribe_crsp(reedl_ictrl_serial_t* ictrl_serial,
     }
     resp->data.raw = data;
     resp->max_len = max_len;
-    if (-1 != resp->fd_evt && resp->fd_evt != fd_evt) {
-        close(resp->fd_evt);
-    }
+    assert(resp->fd_evt == -1); // fd_evt must be closed and then cleared upon trigger or timeout.
     resp->fd_evt = fd_evt;
 }
     

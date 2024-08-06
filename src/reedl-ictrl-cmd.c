@@ -140,7 +140,7 @@ int reedl_ictrl_fpga_sign(const reedl_ictrl_crsp_fpga_sign_t **crsp)
     if (rc)
         goto reedl_ictrl_error_fpga_sign;
    
-    DBG_LOG("FPGA signature:\n0x%04X v%d.%d (0x%04X), serial#:%d\n",
+    DBG_LOG("\nFPGA signature:0x%04X v%d.%d (0x%04X), serial#:%d\n",
         *(uint16_t*)crsp_fpga_sign->sign,
         crsp_fpga_sign->ver[0], crsp_fpga_sign->ver[1],
         crsp_fpga_sign->hash, crsp_fpga_sign->serial);
@@ -221,7 +221,7 @@ int reedl_ictrl_sspiem_reset(int en)
     } cmd = { { 0xD2, 0x51, sizeof(cmd.en)}, en };
 #pragma pack(pop)
 
-    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 50, "sspiem_reset");
+    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 50, "sspiem_reset");   // AV timeout is to big - wait until RX timeout will be triggered
 
     if (rc) {
         DBG_ERR("command error : SSPIEM_RESET\n");
