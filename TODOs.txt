@@ -1,0 +1,24 @@
+1. +DeviceID verification is ready
+2. +Proceed with Erase Program & verification
+3. +Generate Erase files only, and debug it.
+4. +Program using the tool and Debug verification only.
+5. +Try whole batch - Erase Program & Verify
+=== As a result the programming passed, but the execution time is 50mins!
+    Most of time the write transaction looks like
+	write COMMAND PROGRAM, write DATA, delay, write COMMAND GET_STATUS (or something similar (0xF0000000), read 1 byte (probably status)
+    These transactions cana be combined into a one and  passed as a batch with more prcisious delay on MCU side.
+
+6. +Get SPI timing on th Diamond Programmer
+    Write timing Write & read at 15MHz has no impact
+    The biggest impact is a 1.2ms delay between write and check. total time is 51sec
+    Read timing - 8bytes burst every 100us - total time few seconds
+
+    Using HOST machine as a command source 1ms delay isn't feasible. Probably
+    it is worth to consider move Lattice SSPIEM player into FW atleast partially.
+
+6.1 Need to precise the minimum allowed delay
+
+============
+
+7. Combine multiple packets
+
