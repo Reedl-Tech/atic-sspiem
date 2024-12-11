@@ -201,9 +201,9 @@ static void ictrl_serial_upstream_on_rx_crsp(ictrl_serial_upstream_t *stream)
     }
 
     // Notification is a single-shot only. Flush after use. !!!!
-!!!
-ensure that _proc function won't be called until next subscription
-Don't  close resp file descritor. It will be closed by originator.
+//!!!
+//ensure that _proc function won't be called until next subscription
+//Don't  close resp file descritor. It will be closed by originator.
 //    memset(resp, 0, sizeof(reedl_crsp_t));
 
     // Just for debug, clean RX buff
@@ -454,7 +454,7 @@ void reedl_ictrl_serial_subscribe_crsp(reedl_ictrl_serial_t* ictrl_serial,
     }
     resp->data.raw = data;
     resp->max_len = max_len;
-    assert(resp->fd_evt == -1); // fd_evt must be closed and then cleared upon trigger or timeout.
+    // assert(resp->fd_evt == -1); // fd_evt must be closed and then cleared upon trigger or timeout.
     resp->fd_evt = fd_evt;
 }
     

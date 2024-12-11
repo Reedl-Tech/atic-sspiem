@@ -54,6 +54,7 @@ extern int reedl_ictrl_sspiem_cs(int cs_state);
 extern int reedl_ictrl_sspiem_runclk();
 extern int reedl_ictrl_sspiem_write(const uint8_t* data, int data_len);
 extern int reedl_ictrl_sspiem_read(uint8_t* data, int data_len);
+extern int reedl_ictrl_sspiem_prog64(const uint8_t* data, int data_len);
 extern int reedl_ictrl_imon();
 extern int reedl_ictrl_sign(const reedl_ictrl_crsp_signature_t **crsp);
 extern int reedl_ictrl_fpga_sign(const reedl_ictrl_crsp_fpga_sign_t **crsp);

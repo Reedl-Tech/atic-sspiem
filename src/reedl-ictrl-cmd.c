@@ -245,7 +245,7 @@ int reedl_ictrl_sspiem_cs(int state)
     } cmd = { { 0xD2, 0x55, sizeof(cmd.state)}, state };    // 0 - CS is LOW (active)
 #pragma pack(pop)
 
-    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 50, "sspiem_cs");
+    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 500, "sspiem_cs");
 
     if (rc) {
         DBG_ERR("command error : SSPIEM_CS\n");
@@ -268,7 +268,7 @@ int reedl_ictrl_sspiem_runclk()
     } cmd = { { 0xD2, 0x54, 0x00 } };
 #pragma pack(pop)
 
-    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 50, "sspiem_runclk");
+    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 500, "sspiem_runclk");
 
     if (rc) {
         DBG_ERR("command error : SSPIEM_RUNCLK\n");
@@ -298,7 +298,7 @@ int reedl_ictrl_sspiem_write(const uint8_t *data, int data_len)
 
     memcpy(cmd.data, data, data_len);
 
-    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 50, "sspiem_write");
+    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 500, "sspiem_write");
 
     if (rc) {
         DBG_ERR("command error : SSPIEM_WRITE\n");
@@ -328,7 +328,7 @@ int reedl_ictrl_sspiem_read(uint8_t* data, int data_len)
         DBG_LOG("SSPIEM READ: Request is too big (%d)\n", data_len);
         return -1;
     }
-    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 50, "sspiem_read");
+    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 500, "sspiem_read");
 
     if (rc) {
         DBG_ERR("command error : SSPIEM_READ\n");
@@ -343,6 +343,32 @@ int reedl_ictrl_sspiem_read(uint8_t* data, int data_len)
     memcpy(data, crsp->data, data_len);
 
     DBG_LOG("SSPIEM READ: %d bytes %s (%d) \n", data_len,
+        (g_crsp.ret_code.rc == 0) ? "OK" : "NOK", g_crsp.ret_code.rc);
+
+    return 0;
+}
+
+int reedl_ictrl_sspiem_prog64(const uint8_t* data, int data_len)
+{
+    int rc = 0;
+
+#pragma pack(push, 1)
+    struct reedl_ictrl_cmd_sspiem_write {
+        struct cmd_hdr hdr;
+        uint8_t data[64];
+    } cmd = { { 0xD2, 0x56, data_len} };
+#pragma pack(pop)
+
+    memcpy(cmd.data, data, data_len);
+
+    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 500, "sspiem_prog64");
+
+    if (rc) {
+        DBG_ERR("command error : SSPIEM_PROG64\n");
+        return rc;
+    }
+
+    DBG_LOG("SSPIEM PROG64: %d bytes %s (%d)\n", data_len,
         (g_crsp.ret_code.rc == 0) ? "OK" : "NOK", g_crsp.ret_code.rc);
 
     return 0;

@@ -14,8 +14,14 @@
 ************************************************************************/
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include "reedl-generic.h"
 #include "opcode.h"
+#include "debug.h"
 #include "intrface.h"
+
+extern void print_out_string(char* stringOut);
+extern char g_Message[512];
 
 /************************************************************************
 *
@@ -758,4 +764,105 @@
 
 		return 1;
 	}
+
+
+int algoTryWrTransaction()
+{
+	struct mask_byte {
+		uint8_t mask;
+		uint8_t data;
+	};
+
+	int i, rc;
+	fpos_t try_pos;
+	fpos_t data_pos;
+	uint8_t data_buff[8];
+
+	//  Write 8 bytes and check status in loop
+	struct mask_byte wr_tr[] = {
+		{0xFF,  0x10},		// STARTTRAN
+		{0xFF,		0x12},			// TRANSOUT
+		{0xFF,		0x20},			// 32bit
+		{0xFF,		0x22},			// ALGODATA
+		{0xFF,			0x70},			// ? FPGA WR command ?
+		{0xFF,			0x04},
+		{0xFF,			0x00},
+		{0xFF,			0x00},
+
+		{0xFF,		0x12},			// TRANSOUT
+		{0xFF,		0x40},			// 64bit data don't care
+		//{0x00,			0x00},	// Read from data file
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		{0xFF,		0x27},			// PROGDATAEH
+		{0xFF,	0x1f},			// ENDTRAN
+
+		{0xFF, 0x43},		// LOOP
+		{0x00, 0x0A},		// Number of repeats
+		{0xFF,		0x40},		// WAIT
+		{0x00,		0x01},		// number of miliseconds
+
+		// Prepare buffer for transaction
+		{0xFF,		0x10},		// STARTTRAN
+		{0xFF,			0x12},		// TRANSOUT
+		{0xFF,			0x20},		// 32bit
+		{0xFF,			0x22},		// ALGODATA
+		{0xFF,				0xF0}, 		// ? FPGA read status command ?
+		{0xFF,				0x00},
+		{0xFF,				0x00},
+		{0xFF,				0x00},
+		{0xFF,			0x13},		// TRANSIN
+		{0xFF,			0x08},		// ???
+		{0xFF,			0x21},		// Mask	cmd
+		{0xFF,			0x80},		// Mask data
+		{0xFF,			0x22},		// ALGODATA
+		{0xFF,			0x00},			// 	Write status - zero expected
+		{0xFF,		0x1f},		// ENDTRAN
+		{0xFF, 0x44},		// ENDLOOP
+	};
+
+	rc = fgetpos(algoFilePtr, &try_pos);
+	rc = fgetpos(dataFile, &data_pos);
+
+	for (i = 0; i < COUNT_OF(wr_tr); i++) {
+		uint8_t data = (unsigned char)fgetc(algoFilePtr);
+		if (wr_tr[i].mask == 0) continue;	// ignore data
+		if (wr_tr[i].data != data) break;
+	}
+
+	if (i < COUNT_OF(wr_tr)) {
+		// Template missed - rewind file and exit
+		fsetpos(algoFilePtr, &try_pos);
+		return 0;
+	}
+	
+	// Transaction hit
+	
+	// Get data. Borrowed from TRANS_transceive_stream() see "case DATA_TX"
+	unsigned int trCount2 = sizeof(data_buff);
+	for (i = 0; i < trCount2; i++) {
+		if (!HLDataGetByte(0x27, &data_buff[i], (i == 0) ? 8*trCount2 : 0)) {
+			return ERROR_INIT_DATA;
+		}
+	}
+	
+	sprintf(g_Message, 
+		"Prog64 transaction hit. Algo pos: %-8ld, Data pos: %-8ld)\n",
+		try_pos.__pos, data_pos.__pos);
+	print_out_string(g_Message);
+
+	rc = reedl_ictrl_sspiem_prog64(data_buff, 8);
+	if (rc) {
+		print_out_string("Can't transmit\n");
+		return -1;
+	}
+
+	return 1;
+
+}
 

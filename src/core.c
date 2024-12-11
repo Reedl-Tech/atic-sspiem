@@ -418,6 +418,13 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 		*	Under STANDBY state, it allows opcode STARTTRAN, WAIT, LOOP, REPEAT
 		*	If it is in LOOP or REPEAT, it also allows CONDITION
 		************************************************************************/
+		
+		if (bufAlgo == 0) {
+			int rc = algoTryWrTransaction();
+			if (rc == 1) continue;
+			if (rc < 0) return PROC_FAIL;
+			// if (rc == 0) use original flow
+		}
 
 		if(!VME_getByte(&currentByte, bufAlgo, bufAlgoSize, &bufAlgoIndex)){
 			if(bufAlgo != 0){	

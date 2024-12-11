@@ -16,6 +16,12 @@
     Using HOST machine as a command source 1ms delay isn't feasible. Probably
     it is worth to consider move Lattice SSPIEM player into FW atleast partially.
 
+    SPI transaction fails some times then running not under MSVC.... seems the problem is on MCU side.
+    MCU can't be programmed. Either problem in program cable or power. 	Try to program using tne DFU.
+    After yet another attempt MCU cycle in the loop where power controller reset exactly at the same time (~62ms after power up). 
+    Looks like the MCU drives a pin that cause the short circuit.
+    After soldering iron poking and cleaning issue is gone `\_;/_/` and FPGA programming PASSED
+
 6.1 Need to precise the minimum allowed delay
 
 ============
