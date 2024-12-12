@@ -766,17 +766,39 @@ extern char g_Message[512];
 	}
 
 
-int algoTryWrTransaction()
+int is_all_zeros(unsigned char* data, int data_len)
 {
-	struct mask_byte {
-		uint8_t mask;
-		uint8_t data;
-	};
+	int i;
+	for (i = 0; i < data_len; i++) 
+		if (0 != data[i]) return 0;
 
+	return 1;
+}
+int algoTryProg64()
+{
 	int i, rc;
 	fpos_t try_pos;
 	fpos_t data_pos;
-	uint8_t data_buff[8];
+
+	int all_zeros = -1;		// 0 - zeros collection enabled; -1 - disabled. 
+	// TODO: Zero collection needs to be debugged or modified
+	// TODO: Using TRANS_NUM > 7 cause timeout.
+	//       Probably related with USB native transaction size (64bytes)
+	//       In case of TRANS_NUM > 7 the total packet is >64 bytes and thus 
+	//       needs to be combined from several poackets. Never tried before.
+	//       The same for verification.
+	//       Needs to be investigated.
+
+	// Using TRANS_NUM == 7 the total write time is ~1min for 200kB
+	// The biggest delay is in transport layer. RX thread uses select and event
+	// signaling with 10ms latency (system scheduler). 
+	// Increasing the transaction size may reduce the time significantly.
+	// Also, MCU uses 1msec delay after write transaction. Probably it may be 
+	// reduced as well.
+
+#define PROG64_TRANS_NUM_MAX  7
+	uint8_t data_buff[PROG64_TRANS_NUM_MAX * 8];
+	int data_buff_wr_idx = 0;
 
 	//  Write 8 bytes and check status in loop
 	struct mask_byte wr_tr[] = {
@@ -826,43 +848,185 @@ int algoTryWrTransaction()
 		{0xFF, 0x44},		// ENDLOOP
 	};
 
-	rc = fgetpos(algoFilePtr, &try_pos);
-	rc = fgetpos(dataFile, &data_pos);
+	while (data_buff_wr_idx < sizeof(data_buff) && (all_zeros < 128)) {
 
-	for (i = 0; i < COUNT_OF(wr_tr); i++) {
-		uint8_t data = (unsigned char)fgetc(algoFilePtr);
-		if (wr_tr[i].mask == 0) continue;	// ignore data
-		if (wr_tr[i].data != data) break;
-	}
+		rc = fgetpos(algoFilePtr, &try_pos);
+		rc = fgetpos(dataFile, &data_pos);
 
-	if (i < COUNT_OF(wr_tr)) {
-		// Template missed - rewind file and exit
-		fsetpos(algoFilePtr, &try_pos);
-		return 0;
-	}
-	
-	// Transaction hit
-	
-	// Get data. Borrowed from TRANS_transceive_stream() see "case DATA_TX"
-	unsigned int trCount2 = sizeof(data_buff);
-	for (i = 0; i < trCount2; i++) {
-		if (!HLDataGetByte(0x27, &data_buff[i], (i == 0) ? 8*trCount2 : 0)) {
-			return ERROR_INIT_DATA;
+		// Check template
+		for (i = 0; i < COUNT_OF(wr_tr); i++) {
+			uint8_t data = (unsigned char)fgetc(algoFilePtr);
+			if (wr_tr[i].mask == 0) continue;	// ignore variable data
+			if (wr_tr[i].data != data) break;
+		}
+
+		if (i < COUNT_OF(wr_tr)) {
+			// Template missed - rewind file and write transaction if any was hit
+			fsetpos(algoFilePtr, &try_pos);
+			break;
+		}
+
+		// Transaction hit
+		// Get data. Borrowed from TRANS_transceive_stream() see "case DATA_TX"
+		for (i = 0; i < 8; i++) {
+			if (!HLDataGetByte(0x27, &data_buff[data_buff_wr_idx + i], (i == 0) ? (8 * 8) : 0)) {
+				return ERROR_INIT_DATA;
+			}
+		}
+
+		// Check leading zeros
+		if (all_zeros == 0) {
+			if (is_all_zeros(&data_buff[data_buff_wr_idx], 8)) {
+				// Init leading zeros collection
+				all_zeros += 8;
+			}
+			else {
+				// No leading zeros. Disable collecting and keep data buffer filling.
+				data_buff_wr_idx += 8;
+				all_zeros = -1;
+			}
+		}
+		else if (all_zeros > 0) {
+			// Zeros collecting is in progress
+			if (is_all_zeros(&data_buff[data_buff_wr_idx], 8)) {
+				all_zeros += 8;
+			}
+			else {
+				// Some non-zeros received. 
+				// Exit from loop, write zeros and last 8 data bytes
+				data_buff_wr_idx += 8;
+				break;
+			}
+		}
+		else {
+			// Zeros collecting disabled. Keep data buffer filling.
+			data_buff_wr_idx += 8;
 		}
 	}
-	
-	sprintf(g_Message, 
-		"Prog64 transaction hit. Algo pos: %-8ld, Data pos: %-8ld)\n",
-		try_pos.__pos, data_pos.__pos);
-	print_out_string(g_Message);
 
-	rc = reedl_ictrl_sspiem_prog64(data_buff, 8);
-	if (rc) {
-		print_out_string("Can't transmit\n");
-		return -1;
+	if (all_zeros > 0) {
+		sprintf(g_Message,
+			"ProgZeros transaction hit 0x%02X. Algo pos: %-8ld, Data pos: %-8ld)\n",
+			all_zeros, try_pos.__pos, data_pos.__pos);
+		print_out_string(g_Message);
+
+		rc = reedl_ictrl_sspiem_progZeros(all_zeros);
+		if (rc) {
+			print_out_string("Can't transmit\n");
+			return ERROR_PROC_HARDWARE;
+		}
 	}
 
-	return 1;
+	if (data_buff_wr_idx > 0) {
+		sprintf(g_Message, 
+			"Prog64 transaction hit 0x%02X. Algo pos: %-8ld, Data pos: %-8ld)\n",
+			data_buff_wr_idx, try_pos.__pos, data_pos.__pos);
+		print_out_string(g_Message);
 
+		rc = reedl_ictrl_sspiem_prog64(data_buff, data_buff_wr_idx);
+		if (rc) {
+			print_out_string("Can't transmit\n");
+			return ERROR_PROC_HARDWARE;
+		}
+	}
+
+	if (data_buff_wr_idx == 0) {
+		return 0;
+	}
+	else if (data_buff_wr_idx < sizeof(data_buff)) {
+		// Transaction not fully set. Next transaction is another type.
+		return 0;
+	}
+
+	// if (data_buff_wr_idx == sizeof(data_buff)) {
+	// Buffer is fully set. Let's try continue prog64
+	return 1;
 }
 
+
+int algoTryVerify64()
+{
+	int i, rc;
+	fpos_t try_pos;
+	fpos_t data_pos;
+
+#define VERIFY64_TRANS_NUM_MAX  7
+	uint8_t data_buff[VERIFY64_TRANS_NUM_MAX * 8];	// Data read from *.SED
+	uint8_t data_buff_verify[sizeof(data_buff)];	// Data read from FPGA
+
+	int data_buff_wr_idx = 0;
+
+	//  Write 8 bytes and check status in loop
+	struct mask_byte wr_tr[] = {
+		{0xFF,  0x13},		// TRANSIN
+		{0xFF,	0x40},			
+		{0xFF,	0x27},			// 32bit
+		//{0x00,			0x00},	// Read from data file
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+		//{0x00,			0x00},
+	};
+
+	while (data_buff_wr_idx < sizeof(data_buff)) {
+
+		rc = fgetpos(algoFilePtr, &try_pos);
+		rc = fgetpos(dataFile, &data_pos);
+
+		// Check template
+		for (i = 0; i < COUNT_OF(wr_tr); i++) {
+			uint8_t data = (unsigned char)fgetc(algoFilePtr);
+			if (wr_tr[i].mask == 0) continue;	// ignore variable data
+			if (wr_tr[i].data != data) break;
+		}
+
+		if (i < COUNT_OF(wr_tr)) {
+			// Template missed - rewind file and write transaction if any was hit
+			fsetpos(algoFilePtr, &try_pos);
+			break;
+		}
+
+		// Transaction hit
+		// Get data. Borrowed from TRANS_transceive_stream() see "case DATA_TX"
+		for (i = 0; i < 8; i++) {
+			if (!HLDataGetByte(0x27, &data_buff[data_buff_wr_idx], (i == 0) ? (8 * 8) : 0)) {
+				return ERROR_INIT_DATA;
+			}
+			data_buff_wr_idx++;
+		}
+	}
+
+	if (data_buff_wr_idx > 0) {
+		sprintf(g_Message,
+			"Verify64 transaction hit 0x%02X. Algo pos: %-8ld, Data pos: %-8ld)\n",
+			data_buff_wr_idx, try_pos.__pos, data_pos.__pos);
+		print_out_string(g_Message);
+
+		rc = reedl_ictrl_sspiem_verify64(data_buff_verify, data_buff_wr_idx);
+		if (rc) {
+			print_out_string("Can't transmit\n");
+			return ERROR_PROC_HARDWARE;
+		}
+
+		if (0 != memcmp(data_buff, data_buff_verify, data_buff_wr_idx)) {
+			print_out_string("Data invalid\n");
+			return ERROR_VERIFICATION;
+		}
+
+	}
+
+	if (data_buff_wr_idx == 0) {
+		return 0;
+	}
+	else if (data_buff_wr_idx < sizeof(data_buff)) {
+		// Transaction not fully set. Next transaction is another type.
+		return 0;
+	}
+
+	// if (data_buff_wr_idx == sizeof(data_buff)) {
+	// Buffer is fully set. Let's try continue prog64
+	return 1;
+}

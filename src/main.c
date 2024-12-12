@@ -1,3 +1,8 @@
+// AV: TODOs:
+// 1. Implement progress bar
+// 2. Implement API for GUI
+// 3. Optimize flash time (now ~3min)
+
 /**************************************************************
 *
 * Lattice Semiconductor Corp. Copyright 2011

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 #include <sys/eventfd.h>
 #include <sys/select.h>
 
@@ -15,14 +16,15 @@
 struct reedl_ictrl_crsp_signature;
 struct reedl_ictrl_crsp_imon;
 
-#define MAX_CRESP_LEN 256
+#define MAX_CRESP_LEN 512
 
 typedef union reedl_ictrl_crsp {
-    reedl_ictrl_crsp_signature_t    sign;
-    reedl_ictrl_crsp_imon_t         imon;
-    reedl_ictrl_crsp_fpga_sign_t    fpga_sign;
-    reedl_ictrl_crsp_sspiem_read_t  sspiem_read;
-    reedl_ictrl_crsp_ret_code_t     ret_code;   // Common response for all commands that respond with return code only.
+    reedl_ictrl_crsp_signature_t        sign;
+    reedl_ictrl_crsp_imon_t             imon;
+    reedl_ictrl_crsp_fpga_sign_t        fpga_sign;
+    reedl_ictrl_crsp_sspiem_read_t      sspiem_read;
+    reedl_ictrl_crsp_sspiem_verify64_t  sspiem_verify64;
+    reedl_ictrl_crsp_ret_code_t         ret_code;   // Common response for all commands that respond with return code only.
     uint8_t raw[MAX_CRESP_LEN];
 } reedl_ictrl_crsp_t;
 
@@ -353,12 +355,13 @@ int reedl_ictrl_sspiem_prog64(const uint8_t* data, int data_len)
     int rc = 0;
 
 #pragma pack(push, 1)
-    struct reedl_ictrl_cmd_sspiem_write {
+    struct reedl_ictrl_cmd_sspiem_prog64 {
         struct cmd_hdr hdr;
-        uint8_t data[64];
+        uint8_t data[256];
     } cmd = { { 0xD2, 0x56, data_len} };
 #pragma pack(pop)
 
+    assert(sizeof(cmd.data) >= data_len);
     memcpy(cmd.data, data, data_len);
 
     rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 500, "sspiem_prog64");
@@ -369,6 +372,68 @@ int reedl_ictrl_sspiem_prog64(const uint8_t* data, int data_len)
     }
 
     DBG_LOG("SSPIEM PROG64: %d bytes %s (%d)\n", data_len,
+        (g_crsp.ret_code.rc == 0) ? "OK" : "NOK", g_crsp.ret_code.rc);
+
+    return 0;
+}
+
+int reedl_ictrl_sspiem_progZeros(int data_len)
+{
+    int rc = 0;
+
+#pragma pack(push, 1)
+    struct reedl_ictrl_cmd_sspiem_progZeros {
+        struct cmd_hdr hdr;
+        uint8_t zeros_len;
+    } cmd = { { 0xD2, 0x57, sizeof(cmd.zeros_len)}, .zeros_len = data_len };
+#pragma pack(pop)
+
+    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, sizeof(g_crsp), 500, "sspiem_progZeros");
+
+    if (rc) {
+        DBG_ERR("command error : SSPIEM_PROGZEROS\n");
+        return rc;
+    }
+
+    DBG_LOG("SSPIEM PROGZEROS: %d bytes %s (%d)\n", data_len,
+        (g_crsp.ret_code.rc == 0) ? "OK" : "NOK", g_crsp.ret_code.rc);
+
+    return 0;
+}
+
+int reedl_ictrl_sspiem_verify64(uint8_t* data, int data_len)
+{
+    int rc = 0;
+
+#pragma pack(push, 1)
+    struct reedl_ictrl_cmd_sspiem_verify64 {
+        struct cmd_hdr hdr;
+        uint8_t bytes_to_read;
+    } cmd = { { 0xD2, 0x58, sizeof(cmd.bytes_to_read)}, (uint8_t)data_len };
+#pragma pack(pop)
+
+    reedl_ictrl_crsp_sspiem_verify64_t* crsp = &g_crsp.sspiem_verify64;
+
+    if (sizeof(crsp->data) < data_len) {
+        DBG_LOG("SSPIEM READ: Request is too big (%d)\n", data_len);
+        return -1;
+    }
+    size_t btw = sizeof(g_crsp) - sizeof(crsp->data) + data_len;
+    rc = reedl_ictrl_cmd(&cmd.hdr, &g_crsp, btw, 500, "sspiem_verify64");
+
+    if (rc) {
+        DBG_ERR("command error : SSPIEM_VERIFY64\n");
+        return rc;
+    }
+
+    if (crsp->hdr.size != sizeof(crsp->rc) + data_len) {
+        DBG_LOG("SSPIEM VERIFY64: Failed to read %d bytes\n", data_len);
+        return -1;
+    }
+
+    memcpy(data, crsp->data, data_len);
+
+    DBG_LOG("SSPIEM VERIFY64: %d bytes %s (%d) \n", data_len,
         (g_crsp.ret_code.rc == 0) ? "OK" : "NOK", g_crsp.ret_code.rc);
 
     return 0;

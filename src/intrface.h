@@ -30,6 +30,12 @@ typedef struct dataPointer{
 	unsigned int address;
 } DATA_BUFFER;
 
+/* REEDL Tech Specific. Algo accelerators */
+struct mask_byte {
+	unsigned char mask;
+	unsigned char data;
+};
+
 int dataPreset(const char dataFileName[]);
 int dataInit();			// initialize data
 int dataGetByte(unsigned char *byteOut, short int incCurrentAddr, CSU *checksumUnit);	// get one byte from current column
@@ -51,5 +57,11 @@ unsigned char get_compression();
 short int decomp_initFrame(int bitSize);
 short int decomp_getByte(unsigned char *byteOut);
 short int decomp_getNum();
+
+/************************************************************************
+* REEDL Tech, ICTRL specific. Accelerator functions
+*************************************************************************/
+int algoTryProg64();
+int algoTryVerify64();
 
 #endif

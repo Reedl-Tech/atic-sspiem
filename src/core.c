@@ -420,7 +420,7 @@ int SSPIEm_process(unsigned char *bufAlgo, unsigned int bufAlgoSize)
 		************************************************************************/
 		
 		if (bufAlgo == 0) {
-			int rc = algoTryWrTransaction();
+			int rc = algoTryProg64();
 			if (rc == 1) continue;
 			if (rc < 0) return PROC_FAIL;
 			// if (rc == 0) use original flow
@@ -669,6 +669,14 @@ int proc_TRANS(unsigned char *bufAlgo, unsigned int bufAlgoSize,
 	int i;
 
 	while(retVal != PROC_OVER){
+
+		if (bufAlgo == 0) {
+			int rc = algoTryVerify64();
+			if (rc == 1) continue;
+			if (rc < 0) return rc;
+			// if (rc == 0) use original flow
+		}
+
 		switch (currentByte){
 			case HCOMMENT:
 				if(proc_HCOMMENT(bufAlgo, bufAlgoSize, &bufAlgoIndex, 0) == PROC_FAIL){
